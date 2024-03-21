@@ -6,6 +6,9 @@
   "author": "拆家大主教",
   "license": "AGPL",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "devDependencies": {
     "@electron-forge/core": "^7.3.1",
     "@electron-forge/maker-deb": "^7.3.1",
