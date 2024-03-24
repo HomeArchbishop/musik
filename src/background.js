@@ -5,6 +5,9 @@ const { URL } = require('url')
 const path = require('path')
 const fs = require('fs')
 
+const isDevelopment = process.env.NODE_ENV !== 'production'
+const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
+
 const createProtocol = (scheme) => {
   protocol.handle(scheme, (request) => {
     const pathName = decodeURI(new URL(request.url).pathname)
@@ -33,8 +36,6 @@ const createProtocol = (scheme) => {
     }
   })
 }
-
-const isDevelopment = process.env.NODE_ENV !== 'production'
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -68,11 +69,11 @@ async function createWindow () {
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    await win.loadURL(process.env.VITE_DEV_SERVER_URL, { userAgent: 'okhttp/3.8.1' })
+    await win.loadURL(process.env.VITE_DEV_SERVER_URL, { userAgent })
     if (!process.env.IS_TEST) win.webContents.openDevTools(/* { mode: 'detach' } */)
   } else {
     createProtocol('app')
-    win.loadURL('app://./index.html', { userAgent: 'okhttp/3.8.1' })
+    win.loadURL('app://./index.html', { userAgent })
   }
 
   // win.on('resized', e => {
