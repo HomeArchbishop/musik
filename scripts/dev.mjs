@@ -27,7 +27,7 @@ process.env.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL
   console.info(`  ➜  Vite development server: ${VITE_DEV_SERVER_URL}`)
   console.info('  ➜  Starting electron...')
 
-  await promisify(exec)('npx electron .', { env: process.env })
+  await promisify(exec)('npx electron .', { env: process.env, maxBuffer: 2 * 1024 * 1024 * 1024 })
 
   console.info('  ➜  Electron closed')
   console.info('  ➜  Closing development server...')
