@@ -9,6 +9,10 @@
   "engines": {
     "node": "^18.0.0 || >=20.0.0"
   },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs"
+  },
   "devDependencies": {
     "@electron-forge/core": "^7.3.1",
     "@electron-forge/maker-deb": "^7.3.1",
