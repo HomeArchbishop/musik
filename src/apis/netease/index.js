@@ -9,6 +9,13 @@ async function topPlaylist ({ order = 'hot', cat = '全部', limit = 50, offset 
   })
 }
 
+async function playlistDetail ({ id }) {
+  return await request({
+    url: '/playlist/detail',
+    params: { id }
+  })
+}
+
 export {
-  topPlaylist
+  topPlaylist, playlistDetail
 }

@@ -53,6 +53,17 @@ input:focus {
   box-sizing: border-box;
 }
 
+@font-face {
+  font-family: 'CircularSpTitle-Bold';
+  src: url('/CircularSpTitle-Bold.woff2');
+}
+
+@font-face {
+  font-family: 'CircularSp-Book';
+  src: url('/CircularSp-Book.woff2');
+}
+
+
 /** BASIC STYLES **/
 
 body {
@@ -62,6 +73,7 @@ body {
   height: 100vh;
   min-width: 900px;
   user-select: none;
+  font-family: CircularSp-Book system-ui, 'PingFang SC', STHeiti, sans-serif;
 }
 
 #app {

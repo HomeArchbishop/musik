@@ -1,6 +1,8 @@
 <script setup>
 defineProps({
   item: {
+    id: String,
+    platform: String,
     title: String,
     subtitle: String,
     coverImg: String
@@ -9,17 +11,22 @@ defineProps({
 </script>
 
 <template>
-  <div class="media-card-container">
-    <div class="cover-group">
-      <div class="img-group">
-        <img :src="item.coverImg" alt="">
+  <router-link custom v-slot="{ navigate }" :to="{ name: 'PlaylistView', params: { playlistID: item.id }, query: { platform: item.platform } }">
+    <div
+      class="media-card-container"
+      @click="navigate"
+    >
+      <div class="cover-group">
+        <div class="img-group">
+          <img :src="item.coverImg" :alt="item.title" onload="this.style.opacity=1">
+        </div>
+      </div>
+      <div class="desc-group">
+        <div class="title-box"><span>{{ item.title }}</span></div>
+        <div class="subtitle-box"><span>{{ item.subtitle }}</span></div>
       </div>
     </div>
-    <div class="desc-group">
-      <div class="title-box"><span>{{ item.title }}</span></div>
-      <div class="subtitle-box"><span>{{ item.subtitle }}</span></div>
-    </div>
-  </div>
+  </router-link>
 </template>
 
 <style lang="less" scoped>
@@ -44,6 +51,9 @@ defineProps({
       img {
         border-radius: 6px;
         width: 100%;
+        background: #000;
+        opacity: 0;
+        transition: .2s;
       }
     }
   }

@@ -1,4 +1,14 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function viewRouteBack () {
+  router.back()
+}
+function viewRouteForward () {
+  router.forward()
+}
 </script>
 
 <template>
@@ -6,8 +16,8 @@
     <div class="left">
       <div class="routes-area">
         <div class="routes-group">
-          <button class="route-btn"><f-icon icon="chevron-left"/></button>
-          <button class="route-btn"><f-icon icon="chevron-right"/></button>
+          <button class="route-btn" @click="viewRouteBack"><f-icon icon="chevron-left"/></button>
+          <button class="route-btn" @click="viewRouteForward"><f-icon icon="chevron-right"/></button>
         </div>
       </div>
       <div class="search-area">

@@ -17,10 +17,12 @@ const neteaseTopPlaylistCardInfo = reactive([])
         title: item.name,
         subtitle: item.description,
         id: item.id,
-        coverImg: item.coverImgUrl
+        coverImg: item.coverImgUrl,
+        platform: 'netease'
       }))
     )
   } catch (error) {
+    console.error(error)
     console.error(error.cause)
   }
 })()
