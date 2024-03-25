@@ -7,3 +7,14 @@
 ![electron-^29.1.4](https://img.shields.io/badge/electron-%5E29.1.4-90d0df?logo=electron&logoColor=90d0df&labelColor=2b2d3a&style=flat-square)
 
 开发日志 & TODO @ [dev logs](https://github.com/HomeArchbishop/musik/tree/devlog)
+
+## Quick try
+
+> 仅供预览之用
+>
+> 时间紧迫，暂时使用了自己部署的后端api。后期再集成进桌面应用。
+
+```sh
+$ yarn
+$ yarn dev
+```
