@@ -16,12 +16,12 @@ const theme = computed(() => store.state.storage.theme)
     <nav-bar />
     <side-bar />
     <main class="main-view-area">
-      <router-view v-slot="{ Component }" v-if="$route.meta.keepAlive">
+      <router-view v-slot="{ Component }">
         <keep-alive>
-          <component :is="Component" />
+          <component :is="Component" v-if="$route.meta.keepAlive" :key="$route.fullPath" />
         </keep-alive>
+        <component :is="Component" v-if="!$route.meta.keepAlive" />
       </router-view>
-      <router-view v-if="!$route.meta.keepAlive"></router-view>
     </main>
     <player-bar />
   </div>
