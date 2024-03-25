@@ -1,16 +1,16 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { neteaseApi } from '@/apis'
 
 import MediaCard from '@/components/MediaCard.vue'
 
 const neteaseTopPlaylistLimitPerPage = 50
-const neteaseTopPlaylistCurrentPage = reactive(1)
+const neteaseTopPlaylistCurrentPage = ref(1)
 const neteaseTopPlaylistCardInfo = reactive([])
 
 ;(async () => {
   try {
-    const data = await neteaseApi.topPlaylist({ limit: neteaseTopPlaylistLimitPerPage, offset: (neteaseTopPlaylistCurrentPage - 1) * neteaseTopPlaylistLimitPerPage })
+    const data = await neteaseApi.topPlaylist({ limit: neteaseTopPlaylistLimitPerPage, offset: (neteaseTopPlaylistCurrentPage.value - 1) * neteaseTopPlaylistLimitPerPage })
     console.log(data)
     neteaseTopPlaylistCardInfo.push(
       ...data.playlists.map(item => ({
@@ -20,7 +20,9 @@ const neteaseTopPlaylistCardInfo = reactive([])
         coverImg: item.coverImgUrl
       }))
     )
-  } catch (error) {}
+  } catch (error) {
+    console.error(error.cause)
+  }
 })()
 
 </script>
