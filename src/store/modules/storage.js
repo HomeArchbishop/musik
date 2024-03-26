@@ -2,6 +2,7 @@ export default {
   namespaced: true,
   state: {
     theme: 'dark-theme',
+    lang: 'zh-cn',
     player: {
       playtime: 0,
       totaltime: 0,

@@ -21,7 +21,7 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
         <div class="placeholder" v-else></div>
       </div>
       <div class="title-artist-group">
-        <div class="title-box"><span>{{ playlist[currentPlayingIndex]?.title ?? '暂无歌曲播放' }}</span></div>
+        <div class="title-box"><span>{{ playlist[currentPlayingIndex]?.title ?? $t('player.noSong') }}</span></div>
         <div class="artist-box" v-if="currentPlayingIndex + 1"><span>{{  playlist[currentPlayingIndex].artists.join(',') }}</span></div>
       </div>
     </div>
