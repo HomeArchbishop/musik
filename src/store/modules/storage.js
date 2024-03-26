@@ -27,6 +27,9 @@ export default {
   mutations: {
     setTheme (state, { nextTheme }) {
       state.theme = nextTheme
+    },
+    setLang (state, { nextLang }) {
+      state.lang = nextLang
     }
   }
 }

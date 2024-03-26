@@ -30,7 +30,9 @@ function viewRouteForward () {
     <div class="right">
       <div class="tools-area">
         <div class="tools-group">
-          <button class="route-btn"><f-icon icon="gear"/></button>
+          <router-link :to="{ name: 'SettingView' }" v-slot="{ navigate }" custom>
+            <button class="route-btn" @click="navigate"><f-icon icon="gear"/></button>
+          </router-link>
         </div>
       </div>
     </div>
