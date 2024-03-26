@@ -109,7 +109,7 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
       .artist-box span {
         font-size: 12px;
         font-weight: 100;
-        color: @color-text-sub;
+        color: @color-text-1;
       }
     }
   }
@@ -150,7 +150,7 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
         align-items: center;
         width: 32px;
         height: 32px;
-        color: @color-text-sub;
+        color: @color-text-1;
         font-size: 18px;
         cursor: pointer;
         &:hover {
@@ -185,7 +185,7 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
       .__progress-time-box--span {
         font-size: 12px;
         font-family: CircularSpTitle-Bold;
-        color: @color-text-sub;
+        color: @color-text-1;
         width: 40px;
       }
       .progress-playtime-box span {
@@ -253,7 +253,7 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
     .__btn {
       display: inline-block;
       font-size: 16px;
-      color: @color-text-sub;
+      color: @color-text-1;
       cursor: pointer;
       &:hover {
         color: @color-text-default;
