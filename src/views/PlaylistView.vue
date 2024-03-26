@@ -72,7 +72,7 @@ const neteasePlaylistInfo = reactive({ showable: false })
       <div class="background-shadow"></div>
       <div class="tool-group"></div>
       <div class="media-list-group">
-        <media-line-card class="media-item-line-card" v-for="(item, index) in neteasePlaylistInfo.mediaList" :key="item.id" :item="item" :index="index" />
+        <media-line-card class="media-item-line-card" v-for="(item, index) in neteasePlaylistInfo.mediaList" :key="item.id" :item="item" :index="index + 1" />
       </div>
     </div>
     <div class="playlist-body loading" v-else></div>
