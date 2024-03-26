@@ -1,7 +1,7 @@
 export default {
   namespaced: true,
   state: {
-    theme: window.localStorage.getItem('musik-vuex-storage:theme') ?? 'dark-theme',
+    theme: 'dark-theme',
     player: {
       playtime: 0,
       totaltime: 0,
@@ -23,11 +23,9 @@ export default {
     */]
     }
   },
-  mutations: {},
-  actions: {
+  mutations: {
     setTheme (state, { nextTheme }) {
-      state.nextTheme = nextTheme
-      window.localStorage.setItem('musik-vuex-storage:theme', nextTheme)
+      state.theme = nextTheme
     }
   }
 }
