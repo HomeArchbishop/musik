@@ -29,7 +29,7 @@ defineProps({
       <div class="title-and-artist-group">
         <div class="title-box"><span>{{ item.title }}</span></div>
         <div class="artist-box">
-          <span v-for="artist in item.artists" :key="artist.id">{{ artist.name }}</span>
+          <span>{{ item.artists[0].name }}</span>
         </div>
       </div>
     </div>
@@ -85,7 +85,6 @@ defineProps({
       grid-template-rows: 55% 45%;
       height: 40px;
       .title-box span {
-        display: inline-block;
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
@@ -95,8 +94,13 @@ defineProps({
         font-size: 14px;
       }
       .artist-box span {
-        font-size: 12px;
-        font-weight: 100;
+        display: -webkit-inline-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
+        font-weight: 400;
+        overflow: hidden;
+        font-size: 14px;
         color: @color-text-sub;
       }
     }
