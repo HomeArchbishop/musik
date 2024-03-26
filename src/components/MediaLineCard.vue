@@ -33,6 +33,9 @@ defineProps({
         </div>
       </div>
     </div>
+    <div class="album-group">
+      <div class="album-box"><span>{{ item.album.title }}</span></div>
+    </div>
   </div>
 </template>
 
@@ -41,11 +44,15 @@ defineProps({
 
 .media-line-card-container {
   display: grid;
-  grid-template-columns: [index] 16px [first] minmax(120px,6fr) [var1] minmax(120px,4fr) [var2] minmax(120px,3fr) [last] minmax(120px,1fr);
+  grid-template-columns: 16px minmax(120px,6fr) minmax(120px,4fr) minmax(120px,3fr) minmax(120px,1fr);
   grid-gap: 16px;
   padding: 0 16px;
   height: 56px;
   padding: 0 16px;
+  border-radius: 4px;
+  &:hover {
+    background: @color-block-1;
+  }
   .icon-group {
     display: flex;
     flex-direction: column;
@@ -78,13 +85,35 @@ defineProps({
       grid-template-rows: 55% 45%;
       height: 40px;
       .title-box span {
+        display: inline-block;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
+        font-weight: 400;
+        overflow: hidden;
         font-size: 14px;
-        font-weight: 300;
       }
       .artist-box span {
         font-size: 12px;
         font-weight: 100;
+        color: @color-text-sub;
       }
+    }
+  }
+  .album-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    .album-box span {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      white-space: unset;
+      word-break: break-all;
+      overflow: hidden;
+      font-size: 14px;
+      color: @color-text-sub;
     }
   }
 }
