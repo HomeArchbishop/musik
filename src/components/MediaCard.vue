@@ -20,6 +20,12 @@ defineProps({
         <div class="img-group">
           <img :src="item.coverImg" :alt="item.title" onload="this.style.opacity=1">
         </div>
+        <div class="shadow" :style="{
+          background: `url(${item.coverImg})`
+        }"></div>
+        <div class="play-btn-group">
+          <button><f-icon icon="play" /></button>
+        </div>
       </div>
       <div class="desc-group">
         <div class="title-box"><span>{{ item.title }}</span></div>
@@ -45,7 +51,16 @@ defineProps({
     background-color: @color-block-1;
   }
   .cover-group {
+    position: relative;
     margin-bottom: 12px;
+    transition: .1s;
+    &:has(.play-btn-group:hover) {
+      transform: translateY(-2px);
+      margin-bottom: 2px;
+      .shadow {
+        opacity: 1;
+      }
+    }
     .img-group {
       position: relative;
       img {
@@ -54,6 +69,50 @@ defineProps({
         background: #000;
         opacity: 0;
         transition: .2s;
+      }
+    }
+    .shadow {
+      position: absolute;
+      z-index: -1;
+      top: 12px;
+      transition: .4s;
+      height: 100%;
+      width: 100%;
+      opacity: 0;
+      filter: blur(16px) opacity(0.6);
+      transform: scale(0.92, 0.96);
+      border-radius: 6px;
+      background-size: cover;
+      border-radius: 0.75em;
+    }
+    &:hover .play-btn-group {
+      opacity: 1;
+    }
+    .play-btn-group {
+      position: absolute;
+      top: calc(50% - 24px);
+      left: calc(50% - 24px);
+      height: 48px;
+      width: 48px;
+      border-radius: 48px;
+      opacity: 0;
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        width: 48px;
+        border-radius: 48px;
+        background: #ffffff87;
+        backdrop-filter: blur(8px);
+        color: #fff;
+        font-size: 24px;
+        padding-left: 3px;
+        box-shadow: 0 8px 8px #00000052;
+        transition: .1s;
+        &:hover {
+          transform: scale(1.06);
+        }
       }
     }
   }
