@@ -75,7 +75,9 @@ const neteasePlaylistInfo = reactive({ showable: false })
         <media-line-card class="media-item-line-card" v-for="(item, index) in neteasePlaylistInfo.mediaList" :key="item.id" :item="item" :index="index + 1" />
       </div>
     </div>
-    <div class="playlist-body loading" v-else></div>
+    <div class="playlist-body" v-else>
+      <div class="loading-box loading"></div>
+    </div>
   </div>
 </template>
 
@@ -109,6 +111,8 @@ const neteasePlaylistInfo = reactive({ showable: false })
       flex-shrink: 0;
       box-shadow: 0 4px 60px rgba(0,0,0,.5);
       .img-group {
+        height: 0;
+        padding-bottom: 100%;
         img {
           width: 100%;
           border-radius: 6px;
@@ -133,6 +137,11 @@ const neteasePlaylistInfo = reactive({ showable: false })
   }
   .playlist-body {
     position: relative;
+    .loading-box {
+      width: 100%;
+      height: 140px;
+      margin-top: 36px;
+    }
     .background-shadow {
       position: absolute;
       top: 0;

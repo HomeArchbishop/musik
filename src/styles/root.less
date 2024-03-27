@@ -82,3 +82,21 @@ body {
   width: 100%;
   height: 100vh;
 }
+
+.loading {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 10%,
+    @color-block-1 50%,
+    rgba(255, 255, 255, 0) 90%
+  );
+  background-size: 200% 100%;
+  background-position-x: 180%;
+  animation: 1s loading ease-in-out infinite;
+}
+
+@keyframes loading {
+  to {
+    background-position-x: -20%;
+  }
+}
