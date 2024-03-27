@@ -60,23 +60,26 @@ defineProps({
   .desc-group {
     height: 64px;
     .title-box {
+      padding-bottom: 5px;
       span {
-        display: inline-block;
-        width: 180px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        width: 95%;
         font-weight: 600;
         font-size: 1rem;
       }
     }
     .subtitle-box {
       span {
-        display: inline-block;
-        width: 120px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        word-break: break-all;
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        width: 85%;
         color: @color-text-sub;
         font-weight: 100;
       }
@@ -87,13 +90,6 @@ defineProps({
 @media screen and (max-width: 1400px) {
   .media-card-container {
     flex-basis: 25%;
-    .desc-group {
-      .title-box {
-        span {
-          width: 120px;
-        }
-      }
-    }
   }
 }
 </style>
