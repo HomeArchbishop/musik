@@ -4,12 +4,27 @@ import { computed } from 'vue'
 
 import { second2Readable } from '@/utils/second2Readable'
 
+import DragBar from '@/components/DragBar.vue'
+
 const store = useStore()
 
 const playlist = computed(() => store.state.storage.player.playlist)
 const currentPlayingIndex = computed(() => store.state.storage.player.currentPlayingIndex)
-const playtime = computed(() => second2Readable(store.state.storage.player.playtime))
-const totaltime = computed(() => second2Readable(store.state.storage.player.totaltime))
+const playtime = computed(() => store.state.storage.player.playtime)
+const totaltime = computed(() => store.state.storage.player.totaltime)
+const volume = computed(() => store.state.storage.player.volume)
+const playtimeString = computed(() => second2Readable(playtime.value))
+const totaltimeString = computed(() => second2Readable(totaltime.value))
+const playtimePercentage = computed(() => ~~(playtime.value / totaltime.value * 100))
+
+function changePlaytime (nextPlaytimePercentage) {
+  const nextPlaytime = ~~(nextPlaytimePercentage / 100 * totaltime.value)
+  store.commit('storage/setPlaytime', { nextPlaytime })
+}
+
+function changeVolume (nextVolume) {
+  store.commit('storage/setVolume', { nextVolume })
+}
 
 </script>
 
@@ -38,27 +53,15 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
         </div>
       </div>
       <div class="progress-controller-group">
-        <div class="progress-playtime-box"><span>{{ playtime }}</span></div>
-        <div class="progress-bar-box">
-          <div class="progress-bar-mask">
-            <div class="progress-bar-track"></div>
-            <div class="progress-bar-thumb"></div>
-          </div>
-          <div class="progress-bar-head"></div>
-        </div>
-        <div class="progress-totaltime-box"><span>{{ totaltime }}</span></div>
+        <div class="progress-playtime-box"><span>{{ playtimeString }}</span></div>
+        <drag-bar :value="playtimePercentage" @change="changePlaytime" />
+        <div class="progress-totaltime-box"><span>{{ totaltimeString }}</span></div>
       </div>
     </div>
     <div class="tool-group">
       <div class="volume-group">
         <button class="volume-btn"><f-icon icon="volume-off" /></button>
-        <div class="volume-bar-box">
-          <div class="volume-bar-mask">
-            <div class="volume-bar-track"></div>
-            <div class="volume-bar-thumb"></div>
-          </div>
-          <div class="volume-bar-head"></div>
-        </div>
+        <drag-bar :value="volume" @change="changeVolume" />
       </div>
       <button class="lyrics-view-btn"><f-icon icon="angle-up" /></button>
     </div>
@@ -196,51 +199,6 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
         .__progress-time-box--span;
         text-align: left;
       }
-      .progress-bar-box {
-        position: relative;
-        height: 4px;
-        flex: 1;
-        .progress-bar-mask {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 4px;
-          border-radius: 4px;
-          overflow: hidden;
-          .progress-bar-track {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 4px;
-            background-color: @color-block-1;
-          }
-          .progress-bar-thumb {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 4px;
-            border-radius: 4px;
-            background-color: @color-block-3;
-            transform: translateX(-40%);
-          }
-        }
-        .progress-bar-head {
-          position: absolute;
-          top: -4px;
-          right: calc(40% - 6px);
-          width: 12px;
-          height: 12px;
-          border-radius: 12px;
-          background-color: @color-block-3;
-          cursor: pointer;
-        }
-        &:hover .progress-bar-thumb {
-          background-color: @theme-color;
-        }
-      }
     }
   }
   .tool-group {
@@ -298,13 +256,13 @@ const totaltime = computed(() => second2Readable(store.state.storage.player.tota
             height: 4px;
             border-radius: 4px;
             background-color: @color-block-3;
-            transform: translateX(-40%);
+            transform: translateX(calc(v-bind(volumeBarOffset) - 100%));
           }
         }
         .volume-bar-head {
           position: absolute;
           top: -4px;
-          right: calc(40% - 6px);
+          left: calc(v-bind(volumeBarOffset) - 6px);
           width: 12px;
           height: 12px;
           border-radius: 12px;
