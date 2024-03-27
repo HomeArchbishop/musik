@@ -38,3 +38,18 @@
 - fix: keep-alive 的问题
 - 敲定了英文字体
 - 写日志，push，睡觉
+
+## 2024-3-26 夜里开干
+- PlaylistView 布局完成
+- 底部播放栏 Player 布局完成
+- vuex 持久化
+- fix 了样式 bug
+- i18n 多语言
+- 设置界面 SettingView
+
+## 2024-3-27 中午一会 + 晚上
+- 媒体卡片的 hover 按钮 & 阴影
+- side-bar buttons
+- 响应式拖动条（播放progress & 音量）
+- fix 时长格式化问题
+- 加载骨架屏
