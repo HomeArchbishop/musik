@@ -87,7 +87,7 @@ defineProps({
   }
 }
 
-@media screen and (max-width: 1400px) {
+@media screen and (max-width: 1200px) {
   .media-card-container {
     flex-basis: 25%;
   }
