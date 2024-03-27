@@ -12,5 +12,8 @@ export default {
     langDesc: 'Choose language',
     en: 'English',
     zhcn: '简体中文 - Simplified Chinese'
+  },
+  sidebar: {
+    home: 'Home'
   }
 }
