@@ -1,21 +1,40 @@
 <script setup>
 import { useStore } from 'vuex'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { second2Readable } from '@/utils/second2Readable'
+import { getThemeColor } from '@/utils/getThemeColor'
 
 import DragBar from '@/components/DragBar.vue'
 
 const store = useStore()
 
+const playerbarBackgroundColorDefault = 'var(--color-block-3)'
+const playerbarBackgroundColor = ref(playerbarBackgroundColorDefault)
+
+const isShowLyricsView = computed(() => store.state.runtime.isShowLyricsView)
 const playlist = computed(() => store.state.storage.player.playlist)
-const currentPlayingIndex = computed(() => store.state.storage.player.currentPlayingIndex)
 const playtime = computed(() => store.state.storage.player.playtime)
 const totaltime = computed(() => store.state.storage.player.totaltime)
 const volume = computed(() => store.state.storage.player.volume)
 const playtimeString = computed(() => second2Readable(playtime.value))
 const totaltimeString = computed(() => second2Readable(totaltime.value))
 const playtimePercentage = computed(() => ~~(playtime.value / totaltime.value * 100))
+
+const isShowPronunciationLyrics = ref(false)
+const isShowTranslationLyrics = ref(false)
+
+function updatePlayerbarBackgroundColor () {
+  if (playlist.value.length) {
+    getThemeColor(playlist.value[0].album.coverImg)
+      .then(colorStr => { playerbarBackgroundColor.value = colorStr })
+      .catch(() => {
+        playerbarBackgroundColor.value = playerbarBackgroundColorDefault
+      })
+  } else {
+    playerbarBackgroundColor.value = playerbarBackgroundColorDefault
+  }
+}
 
 function changePlaytime (nextPlaytimePercentage) {
   const nextPlaytime = ~~(nextPlaytimePercentage / 100 * totaltime.value)
@@ -26,44 +45,97 @@ function changeVolume (nextVolume) {
   store.commit('storage/setVolume', { nextVolume })
 }
 
+function showLyricsView () {
+  store.commit('runtime/setLyricsView', { nextValue: !isShowLyricsView.value })
+}
+
+watch(playlist.value[0], () => {
+  updatePlayerbarBackgroundColor()
+})
 </script>
 
 <template>
   <div class="player-bar-container">
-    <div class="media-info-group">
-      <div class="cover-box">
-        <img v-if="currentPlayingIndex + 1" :src="playlist[currentPlayingIndex].album.coverImg" alt="">
-        <div class="placeholder" v-else></div>
-      </div>
-      <div class="title-artist-group">
-        <div class="title-box"><span>{{ playlist[currentPlayingIndex]?.title ?? $t('player.noSong') }}</span></div>
-        <div class="artist-box" v-if="currentPlayingIndex + 1"><span>{{  playlist[currentPlayingIndex].artists.join(',') }}</span></div>
-      </div>
-    </div>
-    <div class="controller-group">
-      <div class="pause-controller-group">
-        <div class="controller-left-group">
-          <button class="play-mode-btn"><f-icon icon="repeat" /></button>
-          <button class="back-media-btn"><f-icon icon="backward-step" /></button>
+    <transition name="jumpout">
+      <div class="fullscreen-area" v-show="isShowLyricsView">
+        <div class="background"></div>
+        <div class="background noise"></div>
+        <div class="main-area">
+          <div class="left">
+            <div class="cover-group">
+              <div class="cover-img-box">
+                <img v-if="playlist.length" :src="playlist[0].album.coverImg" alt="" onload="this.style.opacity=1">
+                <div class="placeholder" v-else></div>
+              </div>
+            </div>
+            <div class="info-group">
+              <div class="title-box"><span>{{ playlist[0]?.title ?? $t('player.noSong') }}</span></div>
+              <div class="artist-album-box" v-if="playlist.length">
+                <span>{{ playlist[0].artists[0]?.name ?? '' }}</span>
+                <span class="sep" v-if="playlist[0].artists.length && playlist[0].album.name">-</span>
+                <span>{{ playlist[0].album.name }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="right">
+            <div class="lyrics-words-group">
+              <div class="placeholder-head"></div>
+              <div
+                class="lyric-piece"
+                :class="{ actived: false /* TODO: active */ }"
+                v-for="(originLyric, i) in store.state.runtime.lyrics.origin" :key="i"
+              >
+                <div class="main-line"><span>{{ originLyric }}</span></div>
+                <div class="sub-line" v-if="isShowPronunciationLyrics"><span>{{ store.state.runtime.lyrics.pronunciation[i] }}</span></div>
+                <div class="sub-line" v-if="isShowTranslationLyrics"><span>{{ store.state.runtime.lyrics.translation[i] }}</span></div>
+              </div>
+              <div class="placeholder-tail"></div>
+            </div>
+            <div class="tool-group"></div>
+          </div>
         </div>
-        <button class="pause-btn"><f-icon icon="pause" /></button>
-        <div class="controller-right-group">
-          <button class="next-media-btn"><f-icon icon="forward-step" /></button>
-          <button class="playlist-btn"><f-icon icon="bars" /></button>
+      </div>
+    </transition>
+    <div class="footer-area" :lyric-mode="isShowLyricsView">
+      <div class="media-info-group" :lyric-mode="isShowLyricsView">
+        <div class="cover-box">
+          <img v-if="playlist.length" :src="playlist[0].album.coverImg" alt="">
+          <div class="placeholder" v-else></div>
+        </div>
+        <div class="title-artist-group">
+          <div class="title-box"><span>{{ playlist[0]?.title ?? $t('player.noSong') }}</span></div>
+          <div class="artist-box" v-if="playlist.length"><span>{{  playlist[0].artists.map(a => a.name).join(',') }}</span></div>
         </div>
       </div>
-      <div class="progress-controller-group">
-        <div class="progress-playtime-box"><span>{{ playtimeString }}</span></div>
-        <drag-bar :value="playtimePercentage" @change="changePlaytime" />
-        <div class="progress-totaltime-box"><span>{{ totaltimeString }}</span></div>
+      <div class="controller-group" :lyric-mode="isShowLyricsView">
+        <div class="pause-controller-group">
+          <div class="controller-left-group">
+            <button class="play-mode-btn"><f-icon icon="repeat" /></button>
+            <button class="back-media-btn"><f-icon icon="backward-step" /></button>
+          </div>
+          <button class="pause-btn"><f-icon icon="pause" /></button>
+          <div class="controller-right-group">
+            <button class="next-media-btn"><f-icon icon="forward-step" /></button>
+            <button class="playlist-btn"><f-icon icon="bars" /></button>
+          </div>
+        </div>
+        <div class="progress-controller-group">
+          <div class="progress-playtime-box"><span>{{ playtimeString }}</span></div>
+          <drag-bar :value="playtimePercentage" @change="changePlaytime" />
+          <div class="progress-totaltime-box"><span>{{ totaltimeString }}</span></div>
+        </div>
       </div>
-    </div>
-    <div class="tool-group">
-      <div class="volume-group">
-        <button class="volume-btn"><f-icon icon="volume-off" /></button>
-        <drag-bar :value="volume" @change="changeVolume" />
+      <div class="tool-group" :lyric-mode="isShowLyricsView">
+        <div class="volume-group">
+          <button class="volume-btn"><f-icon icon="volume-off" /></button>
+          <drag-bar :value="volume" @change="changeVolume" />
+        </div>
+        <button
+          class="lyrics-view-btn"
+          :class="{ 'upside-down': isShowLyricsView }"
+          @click="showLyricsView"
+        ><f-icon icon="angle-up" /></button>
       </div>
-      <button class="lyrics-view-btn"><f-icon icon="angle-up" /></button>
     </div>
   </div>
 </template>
@@ -71,215 +143,381 @@ function changeVolume (nextVolume) {
 <style lang="less" scoped>
 @import '@/styles/global.less';
 
+@footer-area-height: 72px;
+
 .player-bar-container {
-  display: grid;
-  grid-template-columns: 30% 40% 30%;
-  flex-direction: row;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   position: absolute;
   z-index: 10;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: @color-background-playerbar;
-  height: 72px;
-  .media-info-group {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    align-items: center;
-    flex: 1;
-    padding-left: 16px;
-    .cover-box {
-      .placeholder {
-        width: 56px;
-        height: 56px;
-        border-radius: 4px;
-        background: @color-block-1;
-      }
-      img {
-        width: 56px;
-        height: 56px;
-        border-radius: 4px;
+  .fullscreen-area { /* show by v-show */
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      z-index: -1;
+      background-color: v-bind(playerbarBackgroundColor);
+      filter: brightness(110%);
+      &.noise {
+        background: linear-gradient(transparent 0, @color-background-playerbar calc(100% - @footer-area-height)), @background-noise;
       }
     }
-    .title-artist-group {
-      margin-left: 12px;
-      .title-box span {
-        font-size: 15px;
-        font-weight: 300;
+    .main-area {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      padding: 32px 0 24px+@footer-area-height 0;
+      .left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-basis: 40%;
+        height: 100%;
+        padding: 135px 20px 0 140px;
+        transition: .2s;
+        --cover-size: 360px;
+        @media screen and (max-width: 1250px) {
+          padding-left: 40px;
+        }
+        @media screen and (max-height: 830px) {
+          padding-top: 70px;
+        }
+        @media screen and (max-height: 630px) {
+          --cover-size: 220px;
+        }
+        @cover-size: var(--cover-size);
+        .cover-group {
+          width: @cover-size;
+          height: @cover-size;
+          .cover-img-box {
+            img {
+              width: @cover-size;
+              height: @cover-size;
+              border-radius: 10px;
+              opacity: 0;
+              background: @color-block-1;
+            }
+            .placeholder {
+              width: @cover-size;
+              height: @cover-size;
+              border-radius: 10px;
+              background: @color-block-1;
+            }
+          }
+        }
+        .info-group {
+          display: flex;
+          flex-direction: column;
+          width: @cover-size;
+          margin-top: 32px;
+          @media screen and (max-height: 830px) {
+            margin-top: 24px;
+            .title-box span {
+              font-size: 20px !important;
+            }
+          }
+          .title-box span {
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            font-size: 24px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            font-weight: 600;
+          }
+          .artist-album-box span {
+            font-size: 12px;
+            font-weight: 400;
+            color: @color-text-sub;
+            &.sep::before,
+            &.sep::after {
+              content: '';
+              margin: 0 4px;
+            }
+          }
+        }
       }
-      .artist-box span {
-        font-size: 12px;
-        font-weight: 100;
-        color: @color-text-1;
+      .right {
+        display: flex;
+        flex-direction: column;
+        flex-basis: 60%;
+        position: relative;
+        height: 100%;
+        padding: 0 24px;
+        .lyrics-words-group {
+          height: 100%;
+          padding: 0 20%;
+          flex-basis: 100%;
+          overflow: auto;
+          scrollbar-width: none;
+          transition: .2s;
+          @media screen and (max-width: 1250px) {
+            padding: 0 10%;
+          }
+          .lyric-piece {
+            margin: 24px 0;
+            .main-line {
+              font-size: 20px;
+              font-weight: 600;
+              margin: 8px;
+            }
+            .sub-line {
+              font-size: 15px;
+              font-weight: 400;
+              margin: 8px;
+            }
+            &.actived {
+              .main-line {
+                font-size: 28px;
+              }
+              .sub-line {
+                font-size: 21px;
+              }
+            }
+          }
+          .placeholder-head {
+            width: 100%;
+            height: 40%;
+          }
+          .placeholder-tail {
+            width: 100%;
+            height: 50%;
+          }
+        }
+        .tool-group {
+          position: absolute;
+          bottom: 0;
+          right: 24px;
+          width: 48px;
+          height: 48px;
+        }
       }
     }
   }
-  .controller-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    .pause-controller-group {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      column-gap: 16px;
-      height: 32px;
-      width: 100%;
-      margin-bottom: 8px;
-      .__controller-group {
-        display: flex;
-        flex-direction: row;
-        column-gap: 8px;
-        flex: 1;
-      }
-      .controller-left-group {
-        .__controller-group;
-        justify-content: flex-end;
-      }
-      .controller-right-group {
-        .__controller-group;
-        justify-content: flex-start;
-      }
-      .play-mode-btn,
-      .back-media-btn,
-      .next-media-btn,
-      .playlist-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 32px;
-        height: 32px;
-        color: @color-text-1;
-        font-size: 18px;
-        cursor: pointer;
-        &:hover {
-          color: @color-text-default;
-        }
-      }
-      .pause-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 32px;
-        height: 32px;
-        transition: none 33ms cubic-bezier(.3,0,0,1);
-        color: @color-text-reverse;
-        background-color: @color-block-3;
-        border-radius: 32px;
-        font-size: 18px;
-        cursor: pointer;
-        &:hover {
-          transform: scale(1.06);
-        }
-      }
-    }
-    .progress-controller-group {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-      column-gap: 8px;
-      height: 16px;
-      width: 100%;
-      .__progress-time-box--span {
-        font-size: 12px;
-        font-family: CircularSpTitle-Bold;
-        color: @color-text-1;
-        width: 40px;
-      }
-      .progress-playtime-box span {
-        .__progress-time-box--span;
-        text-align: right;
-      }
-      .progress-totaltime-box span {
-        .__progress-time-box--span;
-        text-align: left;
-      }
-    }
-  }
-  .tool-group {
+  .footer-area {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    column-gap: 8px;
-    padding: 0 16px;
-    .__btn {
-      display: inline-block;
-      font-size: 16px;
-      color: @color-text-1;
-      cursor: pointer;
-      &:hover {
-        color: @color-text-default;
-      }
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: @footer-area-height;
+    background-color: @color-background-playerbar;
+    transition: background-color linear .2s;
+    &[lyric-mode=true] {
+      background-color: transparent;
     }
-    .volume-group {
+    .media-info-group {
       display: flex;
       flex-direction: row;
-      justify-content: center;
       align-items: center;
-      column-gap: 8px;
-      height: 16px;
-      width: 94px;
-      .volume-btn {
-        .__btn;
+      align-items: center;
+      flex: 0 0 30%;
+      padding-left: 16px;
+      overflow: hidden;
+      transition: .2s;
+      &[lyric-mode=true] {
+        flex: 0 0 0;
+        padding: 0;
+        white-space: nowrap;
+        opacity: 0;
       }
-      .volume-bar-box {
-        position: relative;
-        height: 4px;
-        flex: 1;
-        .volume-bar-mask {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 4px;
+      .cover-box {
+        .placeholder {
+          width: 56px;
+          height: 56px;
           border-radius: 4px;
+          background: @color-block-1;
+        }
+        img {
+          width: 56px;
+          height: 56px;
+          border-radius: 4px;
+        }
+      }
+      .title-artist-group {
+        margin-left: 12px;
+        .title-box span {
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          font-size: 15px;
+          font-weight: 300;
           overflow: hidden;
-          .volume-bar-track {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 4px;
-            background-color: @color-block-1;
-          }
-          .volume-bar-thumb {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 4px;
-            border-radius: 4px;
-            background-color: @color-block-3;
-            transform: translateX(calc(v-bind(volumeBarOffset) - 100%));
-          }
         }
-        .volume-bar-head {
-          position: absolute;
-          top: -4px;
-          left: calc(v-bind(volumeBarOffset) - 6px);
-          width: 12px;
-          height: 12px;
-          border-radius: 12px;
-          background-color: @color-block-3;
+        .artist-box span {
+          font-size: 12px;
+          font-weight: 100;
+          color: @color-text-1;
+        }
+      }
+    }
+    .controller-group {
+      display: flex;
+      flex-basis: 40%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: .2s;
+      &[lyric-mode=true] {
+        padding: 0 0 0 80px;
+        flex-basis: 60%;
+      }
+      .pause-controller-group {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        column-gap: 16px;
+        height: 32px;
+        width: 100%;
+        margin-bottom: 8px;
+        .__controller-group {
+          display: flex;
+          flex-direction: row;
+          column-gap: 8px;
+          flex: 1;
+        }
+        .controller-left-group {
+          .__controller-group;
+          justify-content: flex-end;
+        }
+        .controller-right-group {
+          .__controller-group;
+          justify-content: flex-start;
+        }
+        .play-mode-btn,
+        .back-media-btn,
+        .next-media-btn,
+        .playlist-btn {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 32px;
+          height: 32px;
+          color: @color-text-1;
+          font-size: 18px;
           cursor: pointer;
+          &:hover {
+            color: @color-text-default;
+          }
+        }
+        .pause-btn {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 32px;
+          height: 32px;
+          transition: none 33ms cubic-bezier(.3,0,0,1);
+          color: @color-text-reverse;
+          background-color: @color-block-3;
+          border-radius: 32px;
+          font-size: 18px;
+          cursor: pointer;
+          &:hover {
+            transform: scale(1.06);
+          }
         }
       }
-      &:hover .volume-bar-thumb,
-      & .volume-btn:hover + div .volume-bar-thumb {
-        background-color: @theme-color !important;
+      .progress-controller-group {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        column-gap: 8px;
+        height: 16px;
+        width: 100%;
+        .__progress-time-box--span {
+          font-size: 12px;
+          font-family: CircularSpTitle-Bold;
+          color: @color-text-1;
+          width: 40px;
+        }
+        .progress-playtime-box span {
+          .__progress-time-box--span;
+          text-align: right;
+        }
+        .progress-totaltime-box span {
+          .__progress-time-box--span;
+          text-align: left;
+        }
       }
     }
-    .lyrics-view-btn {
-      .__btn;
-      margin-left: 32px;
-      margin-right: 8px;
+    .tool-group {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      flex-basis: 30%;
+      column-gap: 8px;
+      padding: 0 16px;
+      transition: .2s;
+      &[lyric-mode=true] {
+        flex-basis: 40%;
+      }
+      .__btn {
+        display: inline-block;
+        font-size: 16px;
+        color: @color-text-1;
+        cursor: pointer;
+        transition: .2s;
+        &:hover {
+          color: @color-text-default;
+        }
+        &.upside-down {
+          transform: rotate(180deg);
+        }
+      }
+      .volume-group {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        column-gap: 8px;
+        height: 16px;
+        width: 94px;
+        .volume-btn {
+          .__btn;
+        }
+      }
+      .lyrics-view-btn {
+        .__btn;
+        margin-left: 32px;
+        margin-right: 8px;
+      }
     }
+  }
+}
+
+.jumpout-enter-active,
+.jumpout-leave-active {
+  transition: linear .2s;
+  .background {
+    transition: linear .2s;
+  }
+}
+
+.jumpout-enter-from,
+.jumpout-leave-to {
+  transform: translateY(100%);
+  *:not(.background) {
+    opacity: 0;
+  }
+  .background {
+    transform: translateY(-100%);
   }
 }
 </style>
