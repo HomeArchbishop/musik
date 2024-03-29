@@ -29,7 +29,7 @@ defineProps({
       </div>
       <div class="desc-group">
         <div class="title-box"><span>{{ item.title }}</span></div>
-        <div class="subtitle-box"><span>{{ item.subtitle }}</span></div>
+        <div class="subtitle-box"><span>{{ item.subtitle.slice(0, 40) }}</span></div>
       </div>
     </div>
   </router-link>
