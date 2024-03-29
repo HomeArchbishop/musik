@@ -14,6 +14,7 @@ const playerbarBackgroundColor = ref(playerbarBackgroundColorDefault)
 
 const isShowLyricsView = computed(() => store.state.runtime.isShowLyricsView)
 const playlist = computed(() => store.state.storage.player.playlist)
+const playingMedia = computed(() => playlist.value[0])
 const playtime = computed(() => store.state.storage.player.playtime)
 const totaltime = computed(() => store.state.storage.player.totaltime)
 const volume = computed(() => store.state.storage.player.volume)
@@ -26,7 +27,7 @@ const isShowTranslationLyrics = ref(false)
 
 function updatePlayerbarBackgroundColor () {
   if (playlist.value.length) {
-    getThemeColor(playlist.value[0].album.coverImg)
+    getThemeColor(playingMedia.value.album.coverImg)
       .then(colorStr => { playerbarBackgroundColor.value = colorStr })
       .catch(() => {
         playerbarBackgroundColor.value = playerbarBackgroundColorDefault
@@ -49,7 +50,7 @@ function showLyricsView () {
   store.commit('runtime/setLyricsView', { nextValue: !isShowLyricsView.value })
 }
 
-watch(playlist.value[0], () => {
+watch(playingMedia, () => {
   updatePlayerbarBackgroundColor()
 })
 </script>
@@ -64,16 +65,16 @@ watch(playlist.value[0], () => {
           <div class="left">
             <div class="cover-group">
               <div class="cover-img-box">
-                <img v-if="playlist.length" :src="playlist[0].album.coverImg" alt="" onload="this.style.opacity=1">
+                <img v-if="playlist.length" :src="playingMedia.album.coverImg" alt="" onload="this.style.opacity=1">
                 <div class="placeholder" v-else></div>
               </div>
             </div>
             <div class="info-group">
-              <div class="title-box"><span>{{ playlist[0]?.title ?? $t('player.noSong') }}</span></div>
+              <div class="title-box"><span>{{ playingMedia?.title ?? $t('player.noSong') }}</span></div>
               <div class="artist-album-box" v-if="playlist.length">
-                <span>{{ playlist[0].artists[0]?.name ?? '' }}</span>
-                <span class="sep" v-if="playlist[0].artists.length && playlist[0].album.name">-</span>
-                <span>{{ playlist[0].album.name }}</span>
+                <span>{{ playingMedia.artists[0]?.name ?? '' }}</span>
+                <span class="sep" v-if="playingMedia.artists.length && playingMedia.album.name">-</span>
+                <span>{{ playingMedia.album.name }}</span>
               </div>
             </div>
           </div>
@@ -99,12 +100,12 @@ watch(playlist.value[0], () => {
     <div class="footer-area" :lyric-mode="isShowLyricsView">
       <div class="media-info-group" :lyric-mode="isShowLyricsView">
         <div class="cover-box">
-          <img v-if="playlist.length" :src="playlist[0].album.coverImg" alt="">
+          <img v-if="playlist.length" :src="playingMedia.album.coverImg" alt="">
           <div class="placeholder" v-else></div>
         </div>
         <div class="title-artist-group">
-          <div class="title-box"><span>{{ playlist[0]?.title ?? $t('player.noSong') }}</span></div>
-          <div class="artist-box" v-if="playlist.length"><span>{{  playlist[0].artists.map(a => a.name).join(',') }}</span></div>
+          <div class="title-box"><span>{{ playingMedia?.title ?? $t('player.noSong') }}</span></div>
+          <div class="artist-box" v-if="playlist.length"><span>{{  playingMedia.artists.map(a => a.name).join(',') }}</span></div>
         </div>
       </div>
       <div class="controller-group" :lyric-mode="isShowLyricsView">
