@@ -1,4 +1,10 @@
 export default {
+  tips: {
+    somethingWrong: '啊！出错啦',
+    tryAgain: '重试',
+    more: '更多',
+    loading: '正在加载'
+  },
   player: {
     noSong: '无播放中的歌曲'
   },

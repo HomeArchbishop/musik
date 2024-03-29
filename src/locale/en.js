@@ -1,4 +1,10 @@
 export default {
+  tips: {
+    somethingWrong: 'Opps!',
+    tryAgain: 'Try again',
+    more: 'More',
+    loading: 'Loading'
+  },
   player: {
     noSong: 'No song in play'
   },
