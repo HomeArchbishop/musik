@@ -39,6 +39,15 @@ export default {
     },
     updatePlayerPlaylist (state, { type, pos, media }) {
       const mediaToBe = JSON.parse(JSON.stringify(media))
+      // reduce
+      if (type !== 'pop' || type !== 'unshift') {
+        for (let i = 0; i < state.player.playlist.length; i++) {
+          if (state.player.playlist[i].id === mediaToBe.id) {
+            state.player.playlist.splice(i, 1)
+          }
+        }
+      }
+      // operate
       if (type === 'push') {
         state.player.playlist.push(mediaToBe)
       } else if (type === 'pop') {
