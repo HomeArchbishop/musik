@@ -6,7 +6,10 @@ export default {
     loading: '正在加载'
   },
   player: {
-    noSong: '无播放中的歌曲'
+    noSong: '无播放中的歌曲',
+    playlist: '播放列表',
+    cnt: '共{0}首',
+    remove: '移除'
   },
   settingView: {
     settings: '设置',

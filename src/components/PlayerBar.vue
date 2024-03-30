@@ -12,9 +12,11 @@ const store = useStore()
 const playerbarBackgroundColorDefault = 'var(--color-block-3)'
 const playerbarBackgroundColor = ref(playerbarBackgroundColorDefault)
 
+const isShowPlayistView = ref(false)
 const isShowLyricsView = computed(() => store.state.runtime.isShowLyricsView)
 const playlist = computed(() => store.state.storage.player.playlist)
-const playingMedia = computed(() => playlist.value[0])
+const currentPlayingIndex = computed(() => store.state.storage.player.currentPlayingIndex)
+const playingMedia = computed(() => playlist.value[currentPlayingIndex])
 const playtime = computed(() => store.state.storage.player.playtime)
 const totaltime = computed(() => store.state.storage.player.totaltime)
 const volume = computed(() => store.state.storage.player.volume)
@@ -46,8 +48,15 @@ function changeVolume (nextVolume) {
   store.commit('storage/setVolume', { nextVolume })
 }
 
-function showLyricsView () {
+function toggleLyricsView () {
+  if (!isShowLyricsView.value) {
+    isShowPlayistView.value = false
+  }
   store.commit('runtime/setLyricsView', { nextValue: !isShowLyricsView.value })
+}
+
+function togglePlaylistView () {
+  isShowPlayistView.value = !isShowPlayistView.value
 }
 
 watch(playingMedia, () => {
@@ -65,13 +74,13 @@ watch(playingMedia, () => {
           <div class="left">
             <div class="cover-group">
               <div class="cover-img-box">
-                <img v-if="playlist.length" :src="playingMedia.album.coverImg" alt="" onload="this.style.opacity=1">
+                <img v-if="currentPlayingIndex + 1" :src="playingMedia.album.coverImg" alt="" onload="this.style.opacity=1">
                 <div class="placeholder" v-else></div>
               </div>
             </div>
             <div class="info-group">
               <div class="title-box"><span>{{ playingMedia?.title ?? $t('player.noSong') }}</span></div>
-              <div class="artist-album-box" v-if="playlist.length">
+              <div class="artist-album-box" v-if="currentPlayingIndex + 1">
                 <span>{{ playingMedia.artists[0]?.name ?? '' }}</span>
                 <span class="sep" v-if="playingMedia.artists.length && playingMedia.album.name">-</span>
                 <span>{{ playingMedia.album.name }}</span>
@@ -97,27 +106,52 @@ watch(playingMedia, () => {
         </div>
       </div>
     </transition>
+    <transition name="fadein">
+      <div class="playlist-cover" v-show="isShowPlayistView" @click="togglePlaylistView"></div>
+    </transition>
+    <transition name="slideup">
+      <div class="playlist-area" v-show="isShowPlayistView" :lyric-mode="isShowLyricsView">
+        <div class="head">
+          <h1>{{
+            playlist.length ?
+            $tc('player.cnt', playlist.length, [playlist.length]) :
+            $t('player.playlist')
+          }}</h1>
+        </div>
+        <div class="main-list">
+          <div
+            class="media-item-box"
+            :class="{ actived: i === currentPlayingIndex }"
+            v-for="(item, i) in playlist" :key="i"
+          >
+            <div class="title-group">{{ item.title }}</div>
+            <div class="artist-group">{{ item.artists[0].name }}</div>
+            <div class="tool-group">
+              <button class="remove-btn">{{ $t('player.remove') }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
     <div class="footer-area" :lyric-mode="isShowLyricsView">
       <div class="media-info-group" :lyric-mode="isShowLyricsView">
         <div class="cover-box">
-          <img v-if="playlist.length" :src="playingMedia.album.coverImg" alt="">
+          <img v-if="currentPlayingIndex + 1" :src="playingMedia.album.coverImg" alt="">
           <div class="placeholder" v-else></div>
         </div>
         <div class="title-artist-group">
           <div class="title-box"><span>{{ playingMedia?.title ?? $t('player.noSong') }}</span></div>
-          <div class="artist-box" v-if="playlist.length"><span>{{  playingMedia.artists.map(a => a.name).join(',') }}</span></div>
+          <div class="artist-box" v-if="currentPlayingIndex + 1"><span>{{  playingMedia.artists.map(a => a.name).join(',') }}</span></div>
         </div>
       </div>
       <div class="controller-group" :lyric-mode="isShowLyricsView">
         <div class="pause-controller-group">
           <div class="controller-left-group">
-            <button class="play-mode-btn"><f-icon icon="repeat" /></button>
             <button class="back-media-btn"><f-icon icon="backward-step" /></button>
           </div>
           <button class="pause-btn"><f-icon icon="pause" /></button>
           <div class="controller-right-group">
             <button class="next-media-btn"><f-icon icon="forward-step" /></button>
-            <button class="playlist-btn"><f-icon icon="bars" /></button>
           </div>
         </div>
         <div class="progress-controller-group">
@@ -127,6 +161,13 @@ watch(playingMedia, () => {
         </div>
       </div>
       <div class="tool-group" :lyric-mode="isShowLyricsView">
+        <button
+          class="playlist-btn"
+          :class="{ actived: isShowPlayistView }"
+          @click="togglePlaylistView"
+          v-show="!isShowLyricsView"
+        ><f-icon icon="bars" /></button>
+        <button class="play-mode-btn"><f-icon icon="repeat" /></button>
         <div class="volume-group">
           <button class="volume-btn"><f-icon icon="volume-off" /></button>
           <drag-bar :value="volume" @change="changeVolume" />
@@ -134,7 +175,7 @@ watch(playingMedia, () => {
         <button
           class="lyrics-view-btn"
           :class="{ 'upside-down': isShowLyricsView }"
-          @click="showLyricsView"
+          @click="toggleLyricsView"
         ><f-icon icon="angle-up" /></button>
       </div>
     </div>
@@ -306,6 +347,104 @@ watch(playingMedia, () => {
       }
     }
   }
+  .playlist-cover {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: @color-shadow-mask;
+  }
+  .playlist-area {
+    position: absolute;
+    right: 16px;
+    bottom: @footer-area-height + 16px;
+    width: 530px;
+    height: 500px;
+    border-radius: 10px;
+    background: @color-block-4;
+    backdrop-filter: saturate(180%) blur(20px);
+    .head {
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      padding: 30px;
+      h1 {
+        padding: 0 20px;
+        font-size: 24px;
+        font-weight: 600;
+      }
+    }
+    .main-list {
+      padding: 0 30px;
+      overflow: auto;
+      height: 370px;
+      scrollbar-width: none;
+      .media-item-box {
+        display: flex;
+        align-items: center;
+        height: 50px;
+        border-radius: 10px;
+        padding: 10px 10px 10px 20px;
+        transition: .3s;
+        &:hover {
+          background: @color-block-2;
+        }
+        &.actived {
+          background: @color-block-2;
+        }
+        .title-group {
+          flex-basis: 70%;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          font-size: 15px;
+          font-weight: 400;
+          padding-right: 10px;
+          cursor: pointer;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+        .artist-group {
+          flex: 1;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          font-size: 13px;
+          font-weight: 400;
+          cursor: pointer;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+        .tool-group {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 30px;
+          .__btn {
+            height: 30px;
+            width: 30px;
+            font-size: 24px;
+            color: @color-text-sub;
+            cursor: pointer;
+            &:hover {
+              color: @color-text-default;
+            }
+          }
+          .__text-btn {
+            width: fit-content !important;
+            font-size: 12px !important;
+          }
+          .remove-btn {
+            .__btn;
+            .__text-btn;
+          }
+        }
+      }
+    }
+  }
   .footer-area {
     display: flex;
     flex-direction: row;
@@ -400,10 +539,8 @@ watch(playingMedia, () => {
           .__controller-group;
           justify-content: flex-start;
         }
-        .play-mode-btn,
         .back-media-btn,
-        .next-media-btn,
-        .playlist-btn {
+        .next-media-btn {
           display: flex;
           justify-content: center;
           align-items: center;
@@ -481,6 +618,9 @@ watch(playingMedia, () => {
         &.upside-down {
           transform: rotate(180deg);
         }
+        &.actived {
+          color: @theme-color;
+        }
       }
       .volume-group {
         display: flex;
@@ -493,6 +633,11 @@ watch(playingMedia, () => {
         .volume-btn {
           .__btn;
         }
+      }
+      .play-mode-btn,
+      .playlist-btn {
+        .__btn;
+        margin-right: 8px;
       }
       .lyrics-view-btn {
         .__btn;
@@ -521,4 +666,25 @@ watch(playingMedia, () => {
     transform: translateY(-100%);
   }
 }
+
+.fadein-enter-active,
+.fadein-leave-active {
+  transition: linear .1s;
+}
+
+.fadein-enter-from,
+.fadein-leave-to {
+  opacity: 0;
+}
+
+.slideup-enter-active,
+.slideup-leave-active {
+  transition: ease-in-out .1s;
+}
+
+.slideup-enter-from,
+.slideup-leave-to {
+  transform: translateY(100%);
+}
+
 </style>

@@ -7,10 +7,12 @@ export default {
       volume: 68,
       playtime: 0,
       totaltime: 0,
+      currentPlayingIndex: -1,
       playlist: [/*
         {
           title: String,
           subtitle: String,
+          id: String,
           album: {
             id: String,
             title: String,

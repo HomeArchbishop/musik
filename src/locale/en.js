@@ -6,7 +6,10 @@ export default {
     loading: 'Loading'
   },
   player: {
-    noSong: 'No song in play'
+    noSong: 'No song in play',
+    playlist: 'Queue',
+    cnt: '1 Song | {0} Songs',
+    remove: 'remove'
   },
   settingView: {
     settings: 'Settings',

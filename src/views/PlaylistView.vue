@@ -29,6 +29,7 @@ const neteasePlaylistInfo = reactive({ showable: false })
       neteasePlaylistInfo.id = data.playlist.id
       neteasePlaylistInfo.mediaList = data.playlist.tracks.map(t => ({
         title: t.name,
+        id: t.id,
         subtitle: t.alia[0] ?? '',
         album: {
           id: String(t.al?.id ?? ''),
