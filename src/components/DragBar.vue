@@ -7,7 +7,10 @@ const props = defineProps({
   value: Number // max = 100
 })
 
-const dragValue = ref(props.value)
+const dragValue = computed({
+  get () { return props.value },
+  set () {}
+})
 const dragBarOffset = computed(() => `${~~(dragValue.value)}%`)
 
 const trackDom = ref(null)

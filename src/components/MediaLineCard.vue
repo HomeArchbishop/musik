@@ -1,9 +1,14 @@
 <script setup>
-defineProps({
+import { useStore } from 'vuex'
+
+const store = useStore()
+
+const props = defineProps({
   index: Number,
   item: {
     title: String,
     subtitle: String,
+    id: String,
     album: {
       id: String,
       title: String,
@@ -15,10 +20,15 @@ defineProps({
     }]
   }
 })
+
+function playMedia () {
+  store.commit('storage/updatePlayerPlaylist', { type: 'unshift', media: props.item })
+  store.commit('storage/updateCurrentPlayingIndex', { nextIndex: 0 })
+}
 </script>
 
 <template>
-  <div class="media-line-card-container">
+  <div class="media-line-card-container" @click="playMedia">
     <div class="icon-group">
       <span class="index-icon">{{ index }}</span>
     </div>

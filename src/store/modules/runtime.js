@@ -2,20 +2,21 @@ export default {
   namespaced: true,
   state: {
     isShowLyricsView: false,
-    lyrics: {
-      origin: [],
-      pronunciation: [],
-      translation: []
-    }
+    lyrics: [/*
+      {
+        from: '',
+        origin: [],
+        pronunciation: [],
+        translation: []
+      }
+    */]
   },
   mutations: {
     setLyricsView (state, { nextValue }) {
       state.isShowLyricsView = nextValue
     },
-    setLyrics (state, { type, lyrics }) {
-      if (type === 'origin' || type === 'pronunciation' || type === 'translation') {
-        state.lyrics[type] = JSON.parse(JSON.stringify(lyrics))
-      }
+    setLyrics (state, { lyrics }) {
+      state.lyrics = JSON.parse(JSON.stringify(lyrics))
     }
   },
   actions: {}

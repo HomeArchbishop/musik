@@ -1,9 +1,11 @@
 <script setup>
 import { useStore } from 'vuex'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
+import { neteaseApi } from '@/apis'
 
 import { second2Readable } from '@/utils/second2Readable'
 import { getThemeColor } from '@/utils/getThemeColor'
+import { parseLyrics } from '@/utils/parseLyrics'
 
 import DragBar from '@/components/DragBar.vue'
 
@@ -12,20 +14,43 @@ const store = useStore()
 const playerbarBackgroundColorDefault = 'var(--color-block-3)'
 const playerbarBackgroundColor = ref(playerbarBackgroundColorDefault)
 
+let audioDOM = document.createElement('audio')
+const isPaused = ref(true)
+const playtime = ref(0)
+const playtimeFloat = ref(0)
+const totaltime = ref(0)
+
+const neteaseMediaURL = ref('')
+
+const isNeteaseMediaURLLoading = ref(false)
+
+const isNeteaseMediaLyricsLoading = ref(false)
+const isNeteaseMediaLyricsHasPronun = ref(false)
+const isNeteaseMediaLyricsHasTransl = ref(false)
+
+const isShowPronunciationLyrics = ref(false)
+const isShowTranslationLyrics = ref(true)
+
 const isShowPlayistView = ref(false)
 const isShowLyricsView = computed(() => store.state.runtime.isShowLyricsView)
 const playlist = computed(() => store.state.storage.player.playlist)
 const currentPlayingIndex = computed(() => store.state.storage.player.currentPlayingIndex)
-const playingMedia = computed(() => playlist.value[currentPlayingIndex])
-const playtime = computed(() => store.state.storage.player.playtime)
-const totaltime = computed(() => store.state.storage.player.totaltime)
+const playingMedia = computed(() => playlist.value[currentPlayingIndex.value])
 const volume = computed(() => store.state.storage.player.volume)
 const playtimeString = computed(() => second2Readable(playtime.value))
 const totaltimeString = computed(() => second2Readable(totaltime.value))
-const playtimePercentage = computed(() => ~~(playtime.value / totaltime.value * 100))
+const playtimePercentage = computed(() => totaltime.value ? ~~(playtime.value / totaltime.value * 100) : 0)
+const lyrics = computed(() => store.state.runtime.lyrics)
 
-const isShowPronunciationLyrics = ref(false)
-const isShowTranslationLyrics = ref(false)
+const lyricsActivedIndex = computed(() => {
+  // binary search? too complex for this...
+  for (let i = lyrics.value.length - 1; i > -1; i--) {
+    if (lyrics.value[i].from <= playtimeFloat.value) {
+      return i
+    }
+  }
+  return 0
+})
 
 function updatePlayerbarBackgroundColor () {
   if (playlist.value.length) {
@@ -40,8 +65,12 @@ function updatePlayerbarBackgroundColor () {
 }
 
 function changePlaytime (nextPlaytimePercentage) {
-  const nextPlaytime = ~~(nextPlaytimePercentage / 100 * totaltime.value)
-  store.commit('storage/setPlaytime', { nextPlaytime })
+  audioDOM.currentTime = nextPlaytimePercentage * audioDOM.duration / 100
+  playtime.value = ~~(nextPlaytimePercentage / 100 * totaltime.value)
+}
+
+function changeTotaltimeHandler (e) {
+  totaltime.value = ~~e.target.duration
 }
 
 function changeVolume (nextVolume) {
@@ -59,9 +88,106 @@ function togglePlaylistView () {
   isShowPlayistView.value = !isShowPlayistView.value
 }
 
-watch(playingMedia, () => {
-  updatePlayerbarBackgroundColor()
-})
+async function updateMediaURL (id) {
+  if (isNeteaseMediaURLLoading.value) { return }
+  isNeteaseMediaURLLoading.value = true
+  try {
+    neteaseMediaURL.value = ''
+    const data = await neteaseApi.songURL({ id })
+    console.log(data)
+    neteaseMediaURL.value = data.data[0].code === 200 ? data.data[0].url : `https://music.163.com/song/media/outer/url?id=${id}.mp3`
+    nextTick(() => {
+      audioDOM = document.querySelector('#audio')
+    })
+  } catch (error) {
+    console.error(error)
+    console.error(error.cause)
+  }
+  isNeteaseMediaURLLoading.value = false
+}
+
+async function updateLyric (id) {
+  if (isNeteaseMediaLyricsLoading.value) { return }
+  isNeteaseMediaLyricsLoading.value = true
+  try {
+    isNeteaseMediaLyricsHasPronun.value = false
+    isNeteaseMediaLyricsHasTransl.value = false
+    const data = await neteaseApi.lyric({ id })
+    console.log(data)
+    isNeteaseMediaLyricsHasPronun.value = data.romalrc.lyric !== ''
+    isNeteaseMediaLyricsHasTransl.value = data.tlyric.lyric !== ''
+    const lyrics = parseLyrics(data.lrc.lyric, data.romalrc.lyric, data.tlyric.lyric)
+    store.commit('runtime/setLyrics', { lyrics })
+  } catch (error) {
+    console.error(error)
+    console.error(error.cause)
+  }
+  isNeteaseMediaLyricsLoading.value = false
+}
+
+function switchLyricShowPronuTranOri () {
+  if (
+    isShowPronunciationLyrics.value ||
+    (isShowTranslationLyrics.value && !isNeteaseMediaLyricsHasPronun.value)
+  ) {
+    // to origin
+    isShowPronunciationLyrics.value = false
+    isShowTranslationLyrics.value = false
+    return
+  }
+  if (
+    isShowTranslationLyrics.value ||
+    (!isShowPronunciationLyrics.value && !isNeteaseMediaLyricsHasTransl.value)
+  ) {
+    // to Pronu
+    isShowPronunciationLyrics.value = true
+    isShowTranslationLyrics.value = false
+    return
+  }
+  // to Trans
+  isShowPronunciationLyrics.value = false
+  isShowTranslationLyrics.value = true
+}
+
+function playMedia () {
+  if (isNeteaseMediaURLLoading.value) { return }
+  audioDOM.play()
+  isPaused.value = false
+}
+
+function pauseMedia () {
+  if (isNeteaseMediaURLLoading.value) { return }
+  audioDOM.pause()
+  isPaused.value = true
+}
+
+function mediaPlaytimeUpdateHandler (e) {
+  if (e.target.currentSrc !== neteaseMediaURL.value) { return }
+  const time = e.target.currentTime
+  playtime.value = ~~time
+  playtimeFloat.value = time
+  document.querySelector('[lyrics-actived=true]')?.scrollIntoView({
+    block: 'center',
+    behavior: 'smooth'
+  })
+}
+
+watch(playingMedia, () => { /* change */
+  neteaseMediaURL.value = ''
+  isPaused.value = true
+  totaltime.value = 0
+  playtime.value = 0
+  playtimeFloat.value = 0
+  if (playingMedia.value) {
+    updatePlayerbarBackgroundColor()
+    updateMediaURL(playingMedia.value.id)
+    updateLyric(playingMedia.value.id)
+  } else {
+    updatePlayerbarBackgroundColor()
+    neteaseMediaURL.value = ''
+    store.commit('runtime/setLyrics', { lyrics: [] })
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -91,17 +217,21 @@ watch(playingMedia, () => {
             <div class="lyrics-words-group">
               <div class="placeholder-head"></div>
               <div
-                class="lyric-piece"
-                :class="{ actived: false /* TODO: active */ }"
-                v-for="(originLyric, i) in store.state.runtime.lyrics.origin" :key="i"
+                class="lyric-piece" :lyrics-actived="lyricsActivedIndex === i"
+                :class="{ actived: i === lyricsActivedIndex }"
+                v-for="(lyricPiece, i) in lyrics" :key="i"
               >
-                <div class="main-line"><span>{{ originLyric }}</span></div>
-                <div class="sub-line" v-if="isShowPronunciationLyrics"><span>{{ store.state.runtime.lyrics.pronunciation[i] }}</span></div>
-                <div class="sub-line" v-if="isShowTranslationLyrics"><span>{{ store.state.runtime.lyrics.translation[i] }}</span></div>
+                <div class="main-line"><span>{{ lyricPiece.origin }}</span></div>
+                <div class="sub-line" v-if="isShowPronunciationLyrics"><span>{{ lyricPiece.pronunciation }}</span></div>
+                <div class="sub-line" v-if="isShowTranslationLyrics"><span>{{ lyricPiece.translation }}</span></div>
               </div>
               <div class="placeholder-tail"></div>
             </div>
-            <div class="tool-group"></div>
+            <div class="tool-group">
+              <button class="pronu-trans-ori-btn" @click="switchLyricShowPronuTranOri" v-if="isNeteaseMediaLyricsHasPronun || isNeteaseMediaLyricsHasTransl">
+                {{ isShowPronunciationLyrics ? '音' : isShowTranslationLyrics ? '翻' : '原' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -149,7 +279,8 @@ watch(playingMedia, () => {
           <div class="controller-left-group">
             <button class="back-media-btn"><f-icon icon="backward-step" /></button>
           </div>
-          <button class="pause-btn"><f-icon icon="pause" /></button>
+          <button class="pause-btn" v-if="!isPaused" @click="pauseMedia"><f-icon icon="pause" /></button>
+          <button class="pause-btn" v-else @click="playMedia"><f-icon icon="play" /></button>
           <div class="controller-right-group">
             <button class="next-media-btn"><f-icon icon="forward-step" /></button>
           </div>
@@ -178,6 +309,14 @@ watch(playingMedia, () => {
           @click="toggleLyricsView"
         ><f-icon icon="angle-up" /></button>
       </div>
+    </div>
+    <div class="audio-area">
+      <audio :key="neteaseMediaURL" id="audio"
+        @timeupdate="mediaPlaytimeUpdateHandler"
+        @loadedmetadata="changeTotaltimeHandler">
+        <source v-if="neteaseMediaURL" :src="neteaseMediaURL" type="audio/mpeg">
+        <embed v-if="neteaseMediaURL" :src="neteaseMediaURL">
+      </audio>
     </div>
   </div>
 </template>
@@ -299,13 +438,14 @@ watch(playingMedia, () => {
         padding: 0 24px;
         .lyrics-words-group {
           height: 100%;
-          padding: 0 20%;
+          padding: 0 20% 50%;
           flex-basis: 100%;
           overflow: auto;
           scrollbar-width: none;
           transition: .2s;
+          mask: linear-gradient(transparent 0, @color-block-3 10%, @color-block-3 90%; transparent 100%);
           @media screen and (max-width: 1250px) {
-            padding: 0 10%;
+            padding: 0 10% 50%;
           }
           .lyric-piece {
             margin: 24px 0;
@@ -331,10 +471,6 @@ watch(playingMedia, () => {
           .placeholder-head {
             width: 100%;
             height: 40%;
-          }
-          .placeholder-tail {
-            width: 100%;
-            height: 50%;
           }
         }
         .tool-group {
@@ -645,6 +781,13 @@ watch(playingMedia, () => {
         margin-right: 8px;
       }
     }
+  }
+  .audio-area {
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    left: 0;
+    visibility: hidden;
   }
 }
 

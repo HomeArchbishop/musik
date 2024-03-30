@@ -16,6 +16,20 @@ async function playlistDetail ({ id }) {
   })
 }
 
+async function songURL ({ id }) {
+  return await request({
+    url: '/song/url',
+    params: { id }
+  })
+}
+
+async function lyric ({ id }) {
+  return await request({
+    url: '/lyric',
+    params: { id }
+  })
+}
+
 export {
-  topPlaylist, playlistDetail
+  topPlaylist, playlistDetail, songURL, lyric
 }
